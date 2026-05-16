@@ -1,0 +1,13 @@
+# This folder is pure library SOURCE — it is built via the
+# property-schema-editor-build harness (junction-mounted), never here.
+# These are only ignored in case someone installs/builds locally.
+node_modules/
+dist/
+*.tgz
+
+# Editor / OS
+.idea/
+.vscode/
+*.log
+.DS_Store
+Thumbs.db

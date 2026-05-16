@@ -1,0 +1,37 @@
+<div class="pse-section">
+  <div class="pse-section__head">
+    <div class="pse-section__title">
+      {{ label('Properties') }}
+      <span *ngIf="count > 0" class="pse-section__count">({{ count }})</span>
+    </div>
+    <button
+      *ngIf="!readonly"
+      type="button"
+      class="pse-btn-icon pse-btn-icon--outline"
+      [attr.aria-label]="label('Edit properties')"
+      (click)="openEditor()"
+    >
+      <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true">
+        <path
+          fill="currentColor"
+          d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"
+        />
+      </svg>
+    </button>
+  </div>
+
+  <div class="pse-section__body">
+    <ng-container *ngIf="count > 0; else noProps">
+      <div class="pse-prop-row" *ngFor="let g of groups">
+        <div class="pse-prop-key">{{ label(g.type) }}</div>
+        <div class="pse-prop-vals">
+          <span class="flex-row-space-between-center i2v-chips large secondary-default"
+            *ngFor="let n of g.names">{{ label(n) }}</span>
+        </div>
+      </div>
+    </ng-container>
+    <ng-template #noProps>
+      <span class="pse-section__empty">{{ label('No properties added') }}</span>
+    </ng-template>
+  </div>
+</div>

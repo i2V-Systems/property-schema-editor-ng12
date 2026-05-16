@@ -1,0 +1,216 @@
+<div class="grid-container">
+  <div class="grid-header">
+    <input
+      class="pse-input"
+      type="text"
+      [(ngModel)]="searchTerm"
+      [ngModelOptions]="{ standalone: true }"
+      (input)="onSearchChange()"
+      [placeholder]="'Search by name' | translate"
+    />
+
+    <div class="grid-header-right-part">
+      <button
+        type="button"
+        class="pse-btn pse-btn-primary"
+        [disabled]="!leftUpdateButtonEnable"
+        [title]="!leftUpdateButtonEnable
+          ? ('Resolve the issues in the existing properties before adding a new one.' | translate)
+          : ('Add property' | translate)"
+        (click)="addMoreProperty()"
+      >
+        {{ 'Add property' | translate }}
+      </button>
+
+      <p-multiSelect
+        *ngIf="canImportProperties"
+        styleClass="pse-pmultiselect"
+        panelStyleClass="pse-pmultiselect-panel"
+        appendTo="body"
+        [options]="eventsToImportPropertiesOptions"
+        maxSelectedLabels="2"
+        [(ngModel)]="importedEventNames"
+        [ngModelOptions]="{ standalone: true }"
+        (onChange)="onEventSelectionChange($event)"
+        [placeholder]="importPlaceholder"
+        [filter]="true"
+        optionLabel="label"
+        optionValue="value"
+      ></p-multiSelect>
+
+      <label class="pse-toggle">
+        <input type="checkbox" (change)="handleCheckboxChange($event)" />
+        <span></span>
+      </label>
+
+      <div class="pse-advanced-label">
+        {{ 'Show advanced properties' | translate }}
+      </div>
+    </div>
+  </div>
+
+  <div #tableWrap class="pse-table-wrap">
+    <table class="pse-table">
+      <thead>
+        <tr>
+          <th
+            *ngFor="let key of showableKeys"
+            [style.width.px]="
+              PropertykeyTypes[key] === 'boolean' ? 100 :
+              PropertykeyTypes[key] === 'string' ? 160 : 160
+            "
+          >
+            {{ key | humanize | translate }}
+          </th>
+          <th class="pse-cmd-col">{{ 'command' | humanize | translate }}</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr
+          *ngFor="let control of filteredControls; let rowIndex = index"
+          class="pse-row"
+          [attr.data-row]="rowIndex"
+        >
+          <td *ngFor="let key of showableKeys; let columnIndex = index">
+            <!-- string -->
+            <div
+              *ngIf="PropertykeyTypes[key] === 'string'"
+              class="propertyDiv"
+              [ngClass]="{
+                changed: getClassIfChanged(control, key),
+                removedRow: control.get('remove').value,
+                active: activeInput === 'r' + rowIndex + 'c' + columnIndex,
+                newRow: isNewRow(control),
+                new: isNewRow(control) && columnIndex === 0,
+                remove: control.get('remove').value && columnIndex === 0
+              }"
+            >
+              <ng-container *ngIf="!control.get(key).disabled; else disabledString">
+                <input
+                  [formControl]="control.get(key)"
+                  [ngClass]="{ empty: !control.get(key).value?.length }"
+                  (focus)="setActiveInput('r' + rowIndex + 'c' + columnIndex)"
+                  (blur)="setActiveInput(null)"
+                />
+                <div class="error-message" *ngIf="getFieldError(control, key) as fieldError">
+                  <div class="error-text">{{ fieldError }}</div>
+                </div>
+              </ng-container>
+              <ng-template #disabledString>
+                <input
+                  disabled
+                  type="text"
+                  [ngClass]="{ empty: !control.get(key).value?.length }"
+                  [value]="control.get(key)?.value | translate"
+                />
+              </ng-template>
+            </div>
+
+            <!-- boolean -->
+            <div
+              *ngIf="PropertykeyTypes[key] === 'boolean'"
+              class="propertyDiv"
+              [ngClass]="{
+                changed: getClassIfChanged(control, key),
+                removedRow: control.get('remove').value,
+                newRow: isNewRow(control)
+              }"
+            >
+              <label
+                class="pse-toggle pse-toggle--cell"
+                [matTooltip]="
+                  (key === 'filterable' && !control.get('showInUI').value)
+                    ? ('Enable show in ui to make changes here' | translate)
+                    : ('true/false' | translate)
+                "
+              >
+                <input type="checkbox" [formControl]="control.get(key)" />
+                <span></span>
+              </label>
+            </div>
+
+            <!-- object (type dropdown) -->
+            <div
+              *ngIf="PropertykeyTypes[key] === 'object'"
+              class="propertyDiv"
+              [ngClass]="{
+                changed: getClassIfChanged(control, key),
+                removedRow: control.get('remove').value,
+                newRow: isNewRow(control)
+              }"
+            >
+              <div class="edit-event-dropdown">
+                <p-dropdown
+                  styleClass="pse-pdropdown"
+                  panelStyleClass="pse-pdropdown-panel"
+                  appendTo="body"
+                  [options]="typeOptions"
+                  [formControl]="control.get(key)"
+                  [placeholder]="'Select a type' | translate"
+                  optionLabel="label"
+                  optionValue="value"
+                ></p-dropdown>
+              </div>
+            </div>
+          </td>
+
+          <td class="pse-cmd-col">
+            <div
+              class="actionBtnContainer"
+              [ngClass]="{
+                newRow: isNewRow(control),
+                removedRow: control.get('remove').value
+              }"
+            >
+              <button
+                *ngIf="control.get('isCustomProperty').value"
+                type="button"
+                (click)="removeProperty(control)"
+                class="pse-chip"
+                [ngClass]="{
+                  'pse-chip--danger': !control.get('remove').value,
+                  'pse-chip--success': control.get('remove').value
+                }"
+              >
+                {{ (control.get('remove').value ? 'Undo' : 'Remove') | translate }}
+              </button>
+            </div>
+          </td>
+        </tr>
+
+        <tr *ngIf="!filteredControls.length">
+          <td [attr.colspan]="showableKeys.length + 1" class="pse-norecords">
+            {{ 'No properties' | translate }}
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div *ngIf="errorMessage.length > 0" class="error">
+    <span>{{ errorMessage | translate }}</span>
+  </div>
+
+  <div *ngIf="!hideFooter" class="pse-footer">
+    <button type="button" class="pse-btn pse-btn-ghost" (click)="requestCancel()">
+      {{ 'Cancel' | translate }}
+    </button>
+    <button
+      *ngIf="canImportProperties"
+      type="button"
+      class="pse-btn pse-btn-outline"
+      [disabled]="!updateButtonEnable"
+      (click)="submitImport()"
+    >
+      {{ 'Import' | translate }}
+    </button>
+    <button
+      type="button"
+      class="pse-btn pse-btn-primary"
+      [disabled]="!updateButtonEnable"
+      (click)="submitChanges()"
+    >
+      {{ 'Save' | translate }}
+    </button>
+  </div>
+</div>

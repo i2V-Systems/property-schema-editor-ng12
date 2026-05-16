@@ -1,0 +1,556 @@
+/* ===========================================================================
+ * @i2v-systems/property-schema-editor-ng12
+ *
+ * Backported from analytic-manager's edit-event-properties.component.scss.
+ * Self-contained: design-system classes (i2v-input/i2v-btn/i2v-chips/
+ * i2v-toggle) replaced with `pse-` classes; analytic-manager CSS custom
+ * properties replaced with `--pse-*` tokens that fall back to light
+ * defaults (override them, or the analytic-manager vars they alias, to
+ * re-theme). Kendo Grid theming targets the **v5 legacy rendering**
+ * (`.k-grid td` / `.k-grid-header` / `.k-master-row`) — NOT the
+ * `.k-table-*` classes of the v6/v7 theme era used by the v17 source.
+ * The PrimeNG component theme is baked in under `:host ::ng-deep`
+ * (same approach as i2vquerybuilder-ng12) so the host needs no PrimeNG
+ * theme stylesheet.
+ * =========================================================================== */
+
+:host {
+  /* The host is the editor's own scroll boundary: a flex column that
+   * either fills a height-constrained parent (CommonModal sets
+   * height:100% inline; a flex/grid cell with a definite height; etc.)
+   * or is capped by the `[maxHeight]` input (bound to inline
+   * `max-height` via HostBinding). overflow:hidden makes .pse-table-wrap
+   * the single inner scroller (no nested/host scrollbars). This keeps
+   * overflow handling INSIDE the library — a consumer can drop the
+   * editor into any small container with just `[maxHeight]`. */
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  /* CommonModal sets `containerElement.style.width = '100%'` INLINE on
+   * this host element; an inline style beats a :host rule, so the
+   * width-subtraction must live on .grid-container (below), not here. */
+  width: 100%;
+  /* Flex child of CommonModal's column flex — min-width:0 lets the wide
+   * table scroll inside .pse-table-wrap instead of stretching the modal. */
+  min-width: 0;
+
+  --pse-text-1:   var(--Global-text-text-1, #06283d);
+  --pse-text-2:   var(--Global-text-text-2-light, #5F6F94);
+  --pse-input-bg: var(--input-bg, #ffffff);
+  --pse-border:   var(--Global-others-border, #e5e9ec);
+  --pse-primary:  var(--primary-default-active-bg-color, #0099ed);
+  --pse-danger:   var(--Input-input-error, #c92629);
+  --pse-row-bg:   var(--Global-backgrounds-secondary-bg-2, #f7f9fc);
+
+  font-family: "Proxima Nova", Roboto, "Helvetica Neue", sans-serif;
+  font-size: 13px;
+  color: var(--pse-text-1);
+}
+
+.grid-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  /* calc(100% - 40px), NOT 100%: the host is forced to width:100% inline
+   * by CommonModal (can't override that from :host). Subtracting the
+   * 40px content gutter HERE makes .pse-table-wrap the limiting box, so
+   * a wide table overflows it and scrolls H+V inside — instead of
+   * stretching the modal. No inline style touches .grid-container, so
+   * this value sticks. */
+  width: calc(100% - 40px);
+  /* flex:1 1 AUTO (basis:auto, NOT 0) — a 0 basis collapses this box to
+   * zero height whenever :host has no *definite* height (a [maxHeight]
+   * cap alone is not definite), which blanks the whole editor. With
+   * basis:auto it takes its content height; :host then clamps to
+   * maxHeight / modal height and flex-shrink squeezes it so
+   * .pse-table-wrap's overflow:auto produces the scrollbar (instead of
+   * pushing the footer out / overflowing :host). */
+  flex: 1 1 auto;
+  min-height: 0;
+  min-width: 0;            /* allow the table-wrap child to shrink + scroll */
+  gap: 10px;
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 15.83px;
+  text-align: left;
+}
+
+/* ---- Self-styled editable table ----
+ * Replaces Kendo Grid entirely. The component never used any Kendo grid
+ * feature (no sort/page/Kendo-edit/commands) — it's a plain editable
+ * table driven by a reactive FormArray. A native table is fully
+ * self-contained: zero @progress/* deps, zero global CSS, zero host
+ * bleed, no Kendo licence. Scoped to :host like the rest of the lib.
+ */
+.pse-table-wrap {
+  flex: 1 1 auto;
+  /* The table is the only thing that can exceed the modal — it scrolls
+   * BOTH ways inside this box (never the modal). min-width/min-height:0
+   * are required so this flex child can shrink below the table's
+   * intrinsic size; overflow:auto does the H+V scrolling. */
+  min-width: 0;
+  min-height: 0;
+  width: 100%;
+  overflow: auto;
+  border: 1px solid var(--pse-border);
+  border-radius: 6px;
+  background-color: var(--pse-input-bg);
+  box-sizing: border-box;
+}
+
+.pse-table {
+  /* width:100% lets the table fill the wrap when there's room (basic
+   * mode, few columns). min-width:max-content forces it to its natural
+   * column-sum width when that EXCEEDS the wrap (advanced mode, many
+   * columns) instead of squishing — so .pse-table-wrap's overflow:auto
+   * produces a real HORIZONTAL scrollbar and no content is hidden.
+   * (With table-layout:fixed + width:100% alone the table never
+   * overflows; columns just compress and content gets clipped.) */
+  width: 100%;
+  min-width: max-content;
+  border-collapse: collapse;
+  border-spacing: 0;
+  table-layout: fixed;
+  font: inherit;
+  color: var(--pse-text-1);
+
+  thead th {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    background-color: var(--pse-row-bg);
+    color: var(--pse-text-1);
+    font-weight: 600;
+    text-align: left;
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--pse-border);
+    border-left: 1px solid var(--pse-border);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+
+    &:first-child { border-left: 0; }
+  }
+
+  tbody td {
+    border-bottom: 1px solid var(--pse-border);
+    border-left: 1px solid var(--pse-border);
+    background-color: var(--pse-input-bg);
+    color: var(--pse-text-1);
+    vertical-align: middle;
+    padding: 0;                 /* .propertyDiv owns its own padding */
+
+    &:first-child { border-left: 0; }
+  }
+
+  tbody tr:hover td { background-color: rgba(0, 153, 237, 0.04); }
+
+  .pse-cmd-col { width: 110px; text-align: center; }
+
+  .pse-norecords {
+    padding: 16px;
+    text-align: center;
+    color: var(--pse-text-2);
+    border-left: 0;
+  }
+}
+
+/* ---- cell input ---- */
+.propertyDiv input {
+  border: none;
+  outline: none;
+  border-bottom: 1px solid transparent;
+  transition: border-color 0.3s ease;
+  background-color: transparent;
+  width: 100%;
+  padding: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--pse-text-1);
+}
+.propertyDiv input.empty {
+  border-bottom: 1px solid #b1b1b1;
+}
+
+.actionBtnContainer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.propertyDiv {
+  height: 48px;
+  display: flex;
+  padding: 10px 20px;
+  align-items: center;
+}
+.propertyDiv.new {
+  border-left: 4px solid #10751d;
+  border-radius: 4px;
+}
+.propertyDiv.remove {
+  border-left: 4px solid #e61f1f;
+  border-radius: 4px;
+}
+.propertyDiv.active {
+  border-bottom: 2px solid #007bff;
+}
+.propertyDiv.changed {
+  background-color: #007bff34;
+}
+.propertyDiv.newRow {
+  background-color: #10751e34;
+}
+.propertyDiv.removedRow {
+  background-color: #e61f1f38;
+}
+
+.grid-header {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  align-items: center;
+  gap: 12px;
+  /* Wrap instead of overflowing the modal's content width — otherwise
+   * the "Show advanced properties" label is clipped on the right. */
+  flex-wrap: wrap;
+}
+.grid-header-right-part {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  flex: 1 1 auto;
+  min-width: 0;
+  flex-wrap: wrap;
+}
+.pse-advanced-label {
+  font-weight: 500;
+  font-size: 14px;
+  color: var(--pse-text-2);
+  white-space: nowrap;
+}
+.error {
+  display: flex;
+  justify-content: flex-end;
+  color: var(--pse-danger);
+}
+.error-message {
+  color: var(--pse-danger);
+  font-size: 12px;
+}
+.error-text {
+  color: var(--pse-danger);
+}
+
+/* ---- search input (was i2v-input primary-outline medium) ---- */
+.pse-input {
+  /* Grow/shrink instead of a hard 220px so the toolbar fits the modal
+   * width without clipping; never forces horizontal overflow. */
+  flex: 1 1 220px;
+  width: auto;
+  min-width: 150px;
+  max-width: 320px;
+  min-height: 34px;
+  padding: 6px 12px;
+  color: var(--pse-text-1);
+  background-color: var(--pse-input-bg);
+  border: 1px solid var(--pse-border);
+  border-radius: 6px;
+  box-sizing: border-box;
+  font: inherit;
+  outline: none;
+
+  &:focus {
+    border-color: var(--pse-primary);
+    box-shadow: 0 0 0 2px rgba(0, 153, 237, 0.15);
+  }
+}
+
+/* ---- buttons (was i2v-btn ...) ---- */
+.pse-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 34px;
+  padding: 0 14px;
+  border-radius: 6px;
+  font: inherit;
+  font-weight: 500;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+.pse-btn-primary {
+  background-color: var(--pse-primary);
+  color: #fff;
+  &:hover:not(:disabled) { filter: brightness(0.95); }
+}
+.pse-btn-outline {
+  background-color: transparent;
+  border-color: var(--pse-primary);
+  color: var(--pse-primary);
+  &:hover:not(:disabled) { background-color: rgba(0, 153, 237, 0.06); }
+}
+.pse-btn-ghost {
+  background-color: transparent;
+  border-color: var(--pse-border);
+  color: var(--pse-text-1);
+  &:hover:not(:disabled) { background-color: var(--pse-row-bg); }
+}
+
+/* ---- chips (was i2v-chips large danger/success-default) ---- */
+.pse-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 28px;
+  padding: 0 12px;
+  border-radius: 14px;
+  border: 1px solid transparent;
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+.pse-chip--danger {
+  background-color: rgba(201, 38, 41, 0.1);
+  color: var(--pse-danger);
+  border-color: rgba(201, 38, 41, 0.3);
+}
+.pse-chip--success {
+  background-color: rgba(16, 117, 30, 0.12);
+  color: #10751e;
+  border-color: rgba(16, 117, 30, 0.3);
+}
+
+/* ---- toggle (was i2v-toggle) ---- */
+.pse-toggle {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  width: 36px;
+  height: 20px;
+  cursor: pointer;
+  flex-shrink: 0;
+
+  input {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+  }
+  span {
+    position: absolute;
+    inset: 0;
+    background: #c7ced9;
+    border-radius: 20px;
+    transition: background 0.15s ease;
+
+    &::before {
+      content: '';
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      width: 16px;
+      height: 16px;
+      background: #fff;
+      border-radius: 50%;
+      transition: transform 0.15s ease;
+    }
+  }
+  input:checked + span {
+    background: var(--pse-primary);
+  }
+  input:checked + span::before {
+    transform: translateX(16px);
+  }
+}
+.pse-toggle--cell {
+  margin: 0 auto;
+}
+
+/* ---- footer ---- */
+.pse-footer {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 12px;
+  padding-top: 4px;
+}
+
+/* ---- PrimeNG TRIGGERS (in-component) ----
+ * The closed dropdown/multiselect controls live inside the component, so
+ * they are themed under `:host ::ng-deep` (no host bleed). The OPEN
+ * panels are `appendTo="body"` (so the scrolling table can't clip them)
+ * and are themed in the separate global block below.
+ * Host needs only primeng.min.css (structural) + primeicons.css. */
+:host ::ng-deep {
+  $pse-line: var(--Global-others-border, var(--pse-border, #e5e9ec));
+
+  .pse-pmultiselect.p-multiselect {
+    width: 100%;
+    min-height: 34px;
+    display: flex;
+    align-items: center;
+    background-color: var(--pse-input-bg, #fff);
+    border: 1px solid #{$pse-line};
+    border-radius: 6px;
+    box-shadow: none;
+
+    &:not(.p-disabled):hover { border-color: var(--pse-primary, #0099ed); }
+    .p-multiselect-label { color: var(--pse-text-1, #06283d); padding: 6px 12px; font-size: 14px; }
+    .p-multiselect-trigger { color: var(--pse-text-2, #5F6F94); width: 30px; }
+  }
+
+  /* the type <p-dropdown> sits inside .edit-event-dropdown (transparent,
+   * borderless — matches the original inline-cell look) */
+  .edit-event-dropdown .p-dropdown,
+  .edit-event-dropdown .p-element {
+    background: transparent !important;
+    border: none !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    width: 100% !important;
+  }
+  /* keep the chevron from crowding the selected type text */
+  .edit-event-dropdown .p-dropdown .p-dropdown-label,
+  .edit-event-dropdown .p-inputtext {
+    padding: 0 !important;
+    padding-right: 14px !important;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .edit-event-dropdown .p-dropdown .p-dropdown-trigger {
+    width: 1.8rem;
+    min-width: 1.8rem;
+    justify-content: flex-end;
+    color: var(--pse-text-2, #5F6F94);
+  }
+  .edit-event-dropdown .p-dropdown:not(.p-disabled).p-focus {
+    border-bottom: 2px solid var(--pse-primary, #007bff) !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+  }
+
+  ::-webkit-scrollbar { width: 6px; align-self: stretch; }
+  ::-webkit-scrollbar-thumb { border-radius: 16px; background-color: #d5d5d5 !important; }
+}
+
+/* ---- PrimeNG OVERLAY PANELS (appendTo="body", themed globally) ----
+ * `appendTo="body"` lifts the open panel out of the scrolling table so it
+ * is never clipped, always renders on top, and PrimeNG auto-flips it when
+ * near the viewport bottom. Because the panel is moved to <body> it is
+ * OUTSIDE this component, so `:host ::ng-deep` can't reach it — these
+ * rules use `::ng-deep` WITHOUT `:host`, which Angular compiles to a
+ * plain (global) selector. They are gated by the lib-unique panel
+ * classes `pse-pdropdown-panel` / `pse-pmultiselect-panel` (set via
+ * `panelStyleClass`), so nothing in the host app can match them — no
+ * bleed, while still styling the body-appended panel. */
+::ng-deep .pse-pdropdown-panel,
+::ng-deep .pse-pmultiselect-panel {
+  $pse-panel-bg: var(--custom-default-background-color, #ffffff);
+  $pse-item-text: var(--List-list-text-default, #06283d);
+  $pse-hover-bg: var(--dropdown-hover-color, #e5f6ff);
+  $pse-sel-bg: var(--List-list-bg-subChild, #f2f5fa);
+  $pse-line: var(--Global-others-border, #e5e9ec);
+
+  z-index: 11000;                 /* above dialogs/overlays */
+  background-color: #{$pse-panel-bg};
+  color: #{$pse-item-text};
+  border: 1px solid #{$pse-line};
+  border-radius: 6px;
+  box-shadow: 0 6px 20px rgba(6, 40, 61, 0.18);
+  margin-top: 4px;
+
+  /* ---- header + filter: flat, integrated into the header, exactly like
+   * analytic-manager (bg = panel bg, header bottom-border only, the input
+   * itself borderless — NOT a separate rounded box). ---- */
+  .p-dropdown-header,
+  .p-multiselect-header {
+    background-color: #{$pse-panel-bg};
+    color: #{$pse-item-text};
+    border-bottom: 1px solid #{$pse-line};
+    padding: 8px 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .p-multiselect-filter-container,
+  .p-dropdown-filter-container {
+    position: relative;
+    flex: 1 1 auto;
+    display: flex;
+    align-items: center;
+    background-color: #{$pse-panel-bg};
+  }
+
+  .p-multiselect-filter,
+  .p-dropdown-filter,
+  .p-multiselect-filter.p-inputtext.p-component,
+  .p-dropdown-filter.p-inputtext.p-component {
+    width: 100%;
+    border: 0;
+    border-bottom: 1px solid #{$pse-line};
+    border-radius: 0;
+    background-color: #{$pse-panel-bg};
+    color: #{$pse-item-text};
+    padding: 6px 26px 6px 4px;
+    font-size: 14px;
+    outline: none;
+    box-shadow: none;
+
+    &::placeholder { color: var(--pse-text-2, #5F6F94); }
+    &:focus { border-bottom-color: var(--pse-primary, #0099ed); }
+  }
+
+  .p-multiselect-filter-icon,
+  .p-dropdown-filter-icon {
+    position: absolute;
+    right: 6px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--pse-text-2, #5F6F94);
+    font-size: 14px;
+    pointer-events: none;
+  }
+
+  /* hide PrimeNG's header "select all" + close clutter the original
+   * analytic look doesn't show */
+  .p-multiselect-close { display: none; }
+
+  .p-dropdown-items,
+  .p-multiselect-items { padding: 0; margin: 0; list-style: none; }
+  .p-dropdown-item,
+  .p-multiselect-item {
+    color: #{$pse-item-text};
+    padding: 8px 12px;
+    border-radius: 0;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    &:hover { background-color: #{$pse-hover-bg}; color: #{$pse-item-text}; }
+    &.p-highlight { background-color: #{$pse-sel-bg}; color: #{$pse-item-text}; }
+    &.p-focus,
+    &[data-p-focused="true"] { background-color: #{$pse-sel-bg}; color: #{$pse-item-text}; }
+  }
+
+  .p-multiselect-empty-message,
+  .p-dropdown-empty-message {
+    color: var(--pse-text-2, #5F6F94);
+    padding: 10px 12px;
+    font-size: 14px;
+  }
+}

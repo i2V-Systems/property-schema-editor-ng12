@@ -1,0 +1,123 @@
+/* Read-only properties panel — :host-scoped, mirrors analytic-manager's
+ * event-details Properties block (grouped-by-type chip rows). Uses the
+ * same --pse-* tokens as the editor (light defaults; override or supply
+ * the analytic-manager vars to re-theme). No global CSS, no bleed. */
+:host {
+  /* Flex column so an optional `[maxHeight]` cap (bound to inline
+   * max-height via HostBinding) makes the chip list scroll inside
+   * while the header stays pinned. Unset = grows with content. */
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-height: 0;
+
+  --pse-text-1: var(--Global-text-text-1, #06283d);
+  --pse-text-2: var(--Global-text-text-2-light, #5F6F94);
+  --pse-input-bg: var(--input-bg, #ffffff);
+  --pse-border: var(--Global-others-border, #e5e9ec);
+  --pse-primary: var(--primary-default-active-bg-color, #0099ed);
+
+  font-family: "Proxima Nova", Roboto, "Helvetica Neue", sans-serif;
+  font-size: 14px;
+  color: var(--pse-text-1);
+}
+
+.pse-section {
+  border: 1px solid var(--pse-border);
+  border-radius: 8px;
+  background: var(--pse-input-bg);
+  padding: 14px 16px;
+  box-sizing: border-box;
+  /* Fill the (optionally capped) host as a flex column so the body is
+   * the scroller and the bordered box is the scroll boundary.
+   * flex basis:AUTO (not 0): a 0 basis collapses this box to zero
+   * height when :host has only a [maxHeight] cap (not a definite
+   * height), which blanks the panel. */
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.pse-section__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+  flex: 0 0 auto;          /* header stays pinned while the body scrolls */
+}
+
+.pse-section__title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--pse-text-1);
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.pse-section__count {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--pse-text-2);
+}
+
+.pse-btn-icon--outline {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  cursor: pointer;
+  background: transparent;
+  border: 1px solid var(--pse-border);
+  color: var(--pse-primary);
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+
+  &:hover {
+    border-color: var(--pse-primary);
+    background-color: rgba(0, 153, 237, 0.06);
+  }
+}
+
+.pse-section__body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  /* Scrolls inside the capped .pse-section when [maxHeight] is set;
+   * grows naturally (no scrollbar) when it isn't. */
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+}
+
+.pse-prop-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.pse-prop-key {
+  flex: 0 0 140px;
+  color: var(--pse-text-2);
+  font-weight: 500;
+  padding-top: 4px;
+}
+
+.pse-prop-vals {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  flex: 1 1 auto;
+}
+
+/* Value chips use i2v-utility-ng12's global `.i2v-chips` design-system
+ * class (loaded by the host via chips.component.css) — analytic-manager
+ * parity. No local chip style here on purpose. */
+
+.pse-section__empty {
+  color: var(--pse-text-2);
+  font-size: 14px;
+}
