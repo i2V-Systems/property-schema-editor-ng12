@@ -212,28 +212,33 @@
   }
 }
 
-/* ---- cell input ---- */
-.propertyDiv input {
-  border: none;
-  outline: none;
-  border-bottom: 1px solid transparent;
-  transition: border-color 0.3s ease;
-  background-color: transparent;
+/* ---- cell input ----
+ * Text cells now use i2v-utility-ng12's global `.i2v-input` design-system
+ * class (primary-default + small), loaded by the host via
+ * input.component.css — analytic-manager parity. We only stretch it to
+ * fill the cell here; border/background/states are owned by `.i2v-input`.
+ * (The boolean checkbox carries no `.i2v-input` and is hidden entirely by
+ * `.pse-toggle input` below — so it is intentionally not matched here.) */
+.propertyDiv input.i2v-input {
   width: 100%;
-  padding: 0;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  color: var(--pse-text-1);
-}
-.propertyDiv input.empty {
-  border-bottom: 1px solid #b1b1b1;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 .actionBtnContainer {
   display: flex;
   align-items: center;
   justify-content: center;
+
+  /* i2v-utility's .i2v-chips sets no cursor (it's a display chip); this
+   * one is a real button, so restore the pointer + hover affordance. */
+  button {
+    cursor: pointer;
+    transition: filter 0.15s ease;
+
+    &:hover { filter: brightness(0.95); }
+    &:active { filter: brightness(0.9); }
+  }
 }
 
 .propertyDiv {
@@ -363,28 +368,9 @@
 }
 
 /* ---- chips (was i2v-chips large danger/success-default) ---- */
-.pse-chip {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  height: 28px;
-  padding: 0 12px;
-  border-radius: 14px;
-  border: 1px solid transparent;
-  font: inherit;
-  font-size: 12px;
-  cursor: pointer;
-}
-.pse-chip--danger {
-  background-color: rgba(201, 38, 41, 0.1);
-  color: var(--pse-danger);
-  border-color: rgba(201, 38, 41, 0.3);
-}
-.pse-chip--success {
-  background-color: rgba(16, 117, 30, 0.12);
-  color: #10751e;
-  border-color: rgba(16, 117, 30, 0.3);
-}
+/* The Remove / Undo command button now uses i2v-utility-ng12's global
+ * `.i2v-chips` (large, danger-default / success-default) — no local
+ * chip style here on purpose (analytic-manager parity). */
 
 /* ---- toggle (was i2v-toggle) ---- */
 .pse-toggle {

@@ -90,6 +90,7 @@
             >
               <ng-container *ngIf="!control.get(key).disabled; else disabledString">
                 <input
+                  class="i2v-input primary-default small"
                   [formControl]="control.get(key)"
                   [ngClass]="{ empty: !control.get(key).value?.length }"
                   (focus)="setActiveInput('r' + rowIndex + 'c' + columnIndex)"
@@ -103,6 +104,7 @@
                 <input
                   disabled
                   type="text"
+                  class="i2v-input primary-default small"
                   [ngClass]="{ empty: !control.get(key).value?.length }"
                   [value]="control.get(key)?.value | translate"
                 />
@@ -142,18 +144,30 @@
                 newRow: isNewRow(control)
               }"
             >
-              <div class="edit-event-dropdown">
-                <p-dropdown
-                  styleClass="pse-pdropdown"
-                  panelStyleClass="pse-pdropdown-panel"
-                  appendTo="body"
-                  [options]="typeOptions"
-                  [formControl]="control.get(key)"
-                  [placeholder]="'Select a type' | translate"
-                  optionLabel="label"
-                  optionValue="value"
-                ></p-dropdown>
-              </div>
+              <ng-container *ngIf="!control.get(key).disabled; else disabledType">
+                <div class="edit-event-dropdown">
+                  <p-dropdown
+                    styleClass="pse-pdropdown"
+                    panelStyleClass="pse-pdropdown-panel"
+                    appendTo="body"
+                    [options]="typeOptions"
+                    [formControl]="control.get(key)"
+                    [placeholder]="'Select a type' | translate"
+                    optionLabel="label"
+                    optionValue="value"
+                  ></p-dropdown>
+                </div>
+              </ng-container>
+              <ng-template #disabledType>
+                <!-- type can't be edited for existing properties: show it as
+                     plain text, not a disabled dropdown with a dead chevron -->
+                <input
+                  disabled
+                  type="text"
+                  class="i2v-input primary-default small"
+                  [value]="typeLabel(control.get(key)?.value)"
+                />
+              </ng-template>
             </div>
           </td>
 
@@ -169,11 +183,8 @@
                 *ngIf="control.get('isCustomProperty').value"
                 type="button"
                 (click)="removeProperty(control)"
-                class="pse-chip"
-                [ngClass]="{
-                  'pse-chip--danger': !control.get('remove').value,
-                  'pse-chip--success': control.get('remove').value
-                }"
+                class="flex-row-center-center i2v-chips large"
+                [ngClass]="control.get('remove').value ? 'success-default' : 'danger-default'"
               >
                 {{ (control.get('remove').value ? 'Undo' : 'Remove') | translate }}
               </button>

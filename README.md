@@ -13,9 +13,12 @@ across the advanced-properties toggle and search).
 > The analytic-manager original used Kendo Grid purely as a layout container
 > (no sort/page/Kendo-edit/commands). Kendo Grid requires a ~937 KB **global**
 > theme that repaints the host app's own elements — unacceptable for an
-> embeddable library. So the grid was replaced with a **self-styled native
-> table** driven by the same reactive `FormArray`: zero `@progress/*` deps,
-> no Kendo licence, no global CSS, no host bleed.
+> embeddable library. So the grid was replaced with a **native table**
+> driven by the same reactive `FormArray`: zero `@progress/*` deps, no
+> Kendo licence, **emits no global CSS of its own / no host bleed**. Its
+> text cells and Remove/Undo button reuse i2v-utility-ng12's shared
+> `.i2v-input` / `.i2v-chips` design-system classes (analytic-manager
+> parity — see [Required global CSS](#required-global-css-angularjson-styles)).
 
 > **v1.1 — `<lib-property-schema-section>`.** A read-only "Properties (N)"
 > panel (properties grouped by type as chips) with a pencil button that
@@ -273,7 +276,7 @@ npm install @i2v-systems/property-schema-editor-ng12@1.0.0 --save
 @ngx-translate/core                        ^13.0.0
 primeng ^12.2.0   primeicons ^4.1.0
 @i2v-systems/common-modal-ng12             ^1.0.1   (v1.1 — the section's modal)
-@i2v-systems/i2v-utility-ng12              ^3.0.0   (v1.1 — i2v-btn / i2v-chips global classes)
+@i2v-systems/i2v-utility-ng12              ^3.0.0   (i2v-input / i2v-chips editor cells + i2v-btn / i2v-chips section & modal)
 ```
 
 - `@angular/material` + `@angular/cdk` — `matTooltip` (editor) and `MatDialog`
@@ -284,11 +287,12 @@ primeng ^12.2.0   primeicons ^4.1.0
   `CommonModalComponent`). The bare `<lib-property-schema-editor>` does **not**
   need it.
 - `@i2v-systems/i2v-utility-ng12` — **CSS-class dependency only** (no module
-  import). The section's value chips use its global `.i2v-chips` class and the
-  CommonModal footer buttons use its global `.i2v-btn` classes (the footer is
-  rendered in a body-attached MatDialog overlay, so it can only be styled by
-  global classes — exactly as analytic-manager does). Not needed for the bare
-  editor.
+  import), now needed by the **editor too**: its text cells use the global
+  `.i2v-input` class and the Remove/Undo command button uses global
+  `.i2v-chips` (analytic-manager parity). The section additionally uses
+  `.i2v-chips` for value chips and the CommonModal footer uses `.i2v-btn`
+  (the footer is a body-attached MatDialog overlay, stylable only by global
+  classes — exactly as analytic-manager does).
 - **No `@progress/*` / Kendo, no Kendo licence.**
 
 ### Required global CSS (`angular.json` `styles[]`)
@@ -297,11 +301,12 @@ primeng ^12.2.0   primeicons ^4.1.0
 "node_modules/primeng/resources/primeng.min.css",                 // PrimeNG structural only (NO PrimeNG theme — the lib themes it)
 "node_modules/primeicons/primeicons.css",
 "node_modules/@angular/material/prebuilt-themes/indigo-pink.css",  // any Material theme (matTooltip + MatDialog)
-// v1.1 section / CommonModal only — i2v-utility-ng12 design-system classes:
-"node_modules/@i2v-systems/i2v-utility-ng12/assets/light.css",            // theme tokens
-"node_modules/@i2v-systems/i2v-utility-ng12/assets/common.css",
-"node_modules/@i2v-systems/i2v-utility-ng12/assets/button.component.css", // .i2v-btn  (modal footer buttons)
-"node_modules/@i2v-systems/i2v-utility-ng12/assets/chips.component.css"   // .i2v-chips (section value chips)
+// i2v-utility-ng12 design-system classes (editor cells + section/modal):
+"node_modules/@i2v-systems/i2v-utility-ng12/assets/light.css",            // theme tokens (--primary-default-* etc.)
+"node_modules/@i2v-systems/i2v-utility-ng12/assets/common.css",           // flex helpers (flex-row-center-center)
+"node_modules/@i2v-systems/i2v-utility-ng12/assets/input.component.css",  // .i2v-input  (editor text cells)
+"node_modules/@i2v-systems/i2v-utility-ng12/assets/chips.component.css",  // .i2v-chips  (editor Remove/Undo + section value chips)
+"node_modules/@i2v-systems/i2v-utility-ng12/assets/button.component.css"  // .i2v-btn    (CommonModal footer buttons — section only)
 ```
 
 Plus this **global rule** in your `src/styles.scss` (or any global stylesheet)
@@ -328,8 +333,12 @@ opening `CommonModalComponent` directly.
 > component's style scope — a library literally cannot style them with
 > `:host`-scoped CSS. analytic-manager solves this by passing global
 > `i2v-btn …` class strings; we do the same. The read-only chips likewise use
-> the global `.i2v-chips` for pixel parity. The bare `<lib-property-schema-editor>`
-> stays 100% self-styled and needs none of the i2v-utility CSS.
+> the global `.i2v-chips` for pixel parity. The editor's text cells
+> (`.i2v-input`) and Remove/Undo button (`.i2v-chips`) use the same
+> design-system classes, so `light.css` + `common.css` + `input.component.css`
+> + `chips.component.css` are required even for the bare
+> `<lib-property-schema-editor>` (the editor still emits **zero global CSS of
+> its own** — it only *consumes* these shared classes).
 
 > **No Kendo theme — ever.** This library does not use Kendo. Do **not** add any
 > `@progress/kendo-theme-*` stylesheet for it; that file is ~937 KB of

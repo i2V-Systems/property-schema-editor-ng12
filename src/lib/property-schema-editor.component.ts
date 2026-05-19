@@ -270,6 +270,13 @@ export class PropertySchemaEditorComponent implements OnInit, OnChanges, OnDestr
       }));
   }
 
+  /** Human label for a type value (used to render the type cell as plain
+   *  text when the control is disabled — no dead p-dropdown chevron). */
+  public typeLabel(value: unknown): string {
+    const match = this.typeOptions.find(o => o.value === value);
+    return match ? match.label : value == null ? '' : String(value);
+  }
+
   private toTypeKey(type: any): string | null {
     if (type == null) {
       return null;
