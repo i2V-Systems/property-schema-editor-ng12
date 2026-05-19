@@ -55,12 +55,15 @@
         <tr>
           <th
             *ngFor="let key of showableKeys"
-            [style.width.px]="
-              PropertykeyTypes[key] === 'boolean' ? 100 :
-              PropertykeyTypes[key] === 'string' ? 160 : 160
-            "
+            class="pse-th pse-th--resizable"
+            [style.width.px]="columnWidths[key]"
           >
-            {{ key | humanize | translate }}
+            <span class="pse-th-label">{{ key | humanize | translate }}</span>
+            <span
+              class="pse-col-resizer"
+              title="{{ 'Drag to resize column' | translate }}"
+              (mousedown)="onColumnResizeStart($event, key)"
+            ></span>
           </th>
           <th class="pse-cmd-col">{{ 'command' | humanize | translate }}</th>
         </tr>

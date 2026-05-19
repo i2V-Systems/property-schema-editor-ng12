@@ -49,6 +49,14 @@
   color: var(--pse-text-1);
 }
 
+/* While a column is being drag-resized: force the col-resize cursor
+ * everywhere and kill text/inputs selection so the drag is clean. */
+:host(.pse-resizing),
+:host(.pse-resizing) * {
+  cursor: col-resize !important;
+  user-select: none !important;
+}
+
 .grid-container {
   display: flex;
   flex-direction: column;
@@ -117,6 +125,9 @@
   color: var(--pse-text-1);
 
   thead th {
+    /* position:sticky also makes the th a containing block for the
+     * absolutely-positioned .pse-col-resizer (do NOT switch this to
+     * position:relative — that would kill the sticky header). */
     position: sticky;
     top: 0;
     z-index: 1;
@@ -132,6 +143,50 @@
     text-overflow: ellipsis;
 
     &:first-child { border-left: 0; }
+  }
+
+  /* ---- draggable column resize ---- */
+  .pse-th--resizable {
+    /* label must not run under the grip; clip + ellipsis on the label
+     * now (the th keeps overflow:hidden too). */
+    padding-right: 12px;
+  }
+
+  .pse-th-label {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .pse-col-resizer {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 9px;            /* generous hit area straddling the column edge */
+    height: 100%;
+    cursor: col-resize;
+    user-select: none;
+    touch-action: none;
+    z-index: 2;
+
+    /* thin grip line, centered in the hit area; brightens on hover/drag */
+    &::after {
+      content: "";
+      position: absolute;
+      top: 4px;
+      bottom: 4px;
+      right: 3px;
+      width: 2px;
+      border-radius: 1px;
+      background-color: var(--pse-border);
+      transition: background-color 0.15s ease;
+    }
+
+    &:hover::after,
+    &:active::after {
+      background-color: var(--pse-primary);
+    }
   }
 
   tbody td {

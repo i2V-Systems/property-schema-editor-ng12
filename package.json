@@ -1,6 +1,6 @@
 {
   "name": "@i2v-systems/property-schema-editor-ng12",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "Angular 12.2 backport of analytic-manager's event property-schema editor. Pure-UI, data-agnostic editable table for property definitions (name, columnName, type, defaultValues, options, filterable, isEditable, showInUI, showInPopup, appendText) with add / remove / import-from-another-event, type-aware validators, duplicate-name validation, search filter, advanced-properties toggle and change-row highlighting. v1.1 adds <lib-property-schema-section>: a read-only grouped-by-type properties panel whose pencil opens the editor inside @i2v-systems/common-modal-ng12 (analytic-manager event-details flow). All data via @Input/@Output — no host services, no Kendo, fully self-contained styling (no global CSS bleed).",
   "peerDependencies": {
     "@angular/common": "^12.2.0",

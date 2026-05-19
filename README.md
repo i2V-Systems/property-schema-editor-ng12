@@ -6,7 +6,9 @@ editable table for property *definitions* — name, columnName, type,
 defaultValues, options, filterable, isEditable, showInUI, showInPopup,
 appendText — with add / remove / import-from-another-event, type-aware
 validators, duplicate-name validation, search filter, a "show advanced
-properties" toggle, and change-row highlighting.
+properties" toggle, change-row highlighting, and **drag-to-resize column
+widths** (grab the grip on a column header's right edge; widths persist
+across the advanced-properties toggle and search).
 
 > The analytic-manager original used Kendo Grid purely as a layout container
 > (no sort/page/Kendo-edit/commands). Kendo Grid requires a ~937 KB **global**

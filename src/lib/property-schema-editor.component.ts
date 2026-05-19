@@ -11,6 +11,7 @@ import {
   OnInit,
   Optional,
   Output,
+  Renderer2,
   SimpleChanges,
   ViewChild,
 } from '@angular/core';
@@ -144,9 +145,27 @@ export class PropertySchemaEditorComponent implements OnInit, OnChanges, OnDestr
   public searchTerm = '';
   public filteredControls: FormGroup[] = [];
 
+  /** Per-column pixel width (keyed by showableKeys entry). Drives the
+   *  `<th>` width under table-layout:fixed; user drags mutate this. */
+  public columnWidths: { [key: string]: number } = {};
+  /** True while a column is being drag-resized — host gets
+   *  `.pse-resizing` so the whole editor shows the col-resize cursor
+   *  and text selection is suppressed mid-drag. */
+  public isResizing = false;
+
+  private static readonly MIN_COL_WIDTH = 60;
+  private resizeState: { key: string; startX: number; startWidth: number } | null = null;
+  private resizeUnlisten: Array<() => void> = [];
+
+  @HostBinding('class.pse-resizing')
+  get hostResizing(): boolean {
+    return this.isResizing;
+  }
+
   constructor(
     private readonly zone: NgZone,
     private readonly fb: FormBuilder,
+    private readonly renderer: Renderer2,
     @Optional() private readonly translate?: TranslateService,
     // Both are present only when hosted inside CommonModalComponent
     // (it's opened via MatDialog, so the dynamically-created child
@@ -206,6 +225,7 @@ export class PropertySchemaEditorComponent implements OnInit, OnChanges, OnDestr
   }
 
   ngOnDestroy(): void {
+    this.detachResizeListeners();
     this.destroy$.next();
     this.destroy$.complete();
   }
@@ -275,6 +295,85 @@ export class PropertySchemaEditorComponent implements OnInit, OnChanges, OnDestr
     } else {
       this.showableKeys = allKeys.filter(key => !this.propertyKeyToDiscard.includes(key));
     }
+    this.syncColumnWidths();
+  }
+
+  /**
+   * Seed a width for any visible column that doesn't have one yet.
+   * Only fills gaps — a width the user dragged is preserved across the
+   * advanced-properties toggle and search re-renders.
+   */
+  private syncColumnWidths(): void {
+    for (const key of this.showableKeys) {
+      if (this.columnWidths[key] == null) {
+        this.columnWidths[key] = this.defaultColumnWidth(key);
+      }
+    }
+  }
+
+  private defaultColumnWidth(key: string): number {
+    return PropertykeyTypes[key] === 'boolean' ? 100 : 160;
+  }
+
+  /**
+   * Start a column drag-resize. Bound to mousedown on the `<th>`'s
+   * grip. Listeners are attached at the document level (so the drag
+   * keeps tracking even if the pointer leaves the thin grip) and run
+   * outside Angular — only the committed width write re-enters the zone.
+   */
+  public onColumnResizeStart(event: MouseEvent, key: string): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.resizeState = {
+      key,
+      startX: event.clientX,
+      startWidth: this.columnWidths[key] ?? this.defaultColumnWidth(key),
+    };
+    this.isResizing = true;
+
+    this.zone.runOutsideAngular(() => {
+      const move = this.renderer.listen('document', 'mousemove', (e: MouseEvent) =>
+        this.onColumnResizeMove(e),
+      );
+      const up = this.renderer.listen('document', 'mouseup', () =>
+        this.onColumnResizeEnd(),
+      );
+      this.resizeUnlisten = [move, up];
+    });
+  }
+
+  private onColumnResizeMove(event: MouseEvent): void {
+    if (!this.resizeState) {
+      return;
+    }
+    const { key, startX, startWidth } = this.resizeState;
+    const next = Math.max(
+      PropertySchemaEditorComponent.MIN_COL_WIDTH,
+      Math.round(startWidth + (event.clientX - startX)),
+    );
+    if (next === this.columnWidths[key]) {
+      return;
+    }
+    // Re-enter Angular only to commit the new width (one CD per frame-ish
+    // change), keeping the high-frequency mousemove itself zone-free.
+    this.zone.run(() => {
+      this.columnWidths[key] = next;
+    });
+  }
+
+  private onColumnResizeEnd(): void {
+    this.detachResizeListeners();
+    if (this.isResizing) {
+      this.zone.run(() => {
+        this.isResizing = false;
+        this.resizeState = null;
+      });
+    }
+  }
+
+  private detachResizeListeners(): void {
+    this.resizeUnlisten.forEach(off => off());
+    this.resizeUnlisten = [];
   }
 
   private buildForm(): void {
