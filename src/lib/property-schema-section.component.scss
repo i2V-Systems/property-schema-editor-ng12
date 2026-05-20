@@ -52,19 +52,20 @@
   align-self: flex-start;   /* pin to top — don't stretch with the body */
 }
 
+/* Heading + count share one styling — exact spec requested by host.
+ * `.pse-section__count` has no rule of its own so it inherits everything
+ * from this title flex container. */
 .pse-section__title {
-  font-size: 16px;
-  font-weight: 600;
-  color: var(--pse-text-1);
   display: flex;
-  align-items: baseline;
-  gap: 6px;
-}
-
-.pse-section__count {
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--pse-text-2);
+  gap: 4px;
+  color: #06283D;
+  /* Inherit the app body font (the lib's :host otherwise pins its own
+     family via a class selector that beats body inheritance). */
+  font-family: inherit;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: normal;
 }
 
 .pse-btn-icon--outline {
