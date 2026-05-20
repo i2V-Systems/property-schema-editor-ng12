@@ -35,7 +35,7 @@
    * the head opts out via `align-self: flex-start` to pin to the top. */
   display: flex;
   flex-direction: row;
-  gap: 24px;
+  gap: 32px;
   flex: 1 1 auto;
   min-height: 0;
   background: transparent;
@@ -45,10 +45,10 @@
 }
 
 .pse-section__head {
+  width: 22%;
   display: flex;
   align-items: center;
-  gap: 8px;
-  flex: 0 0 auto;
+  gap: 20px;
   align-self: flex-start;   /* pin to top — don't stretch with the body */
 }
 
@@ -87,9 +87,14 @@
 }
 
 .pse-section__body {
-  /* Right cluster: grows to fill the row, scrolls vertically inside
-   * the bordered group-table when [maxHeight] caps the host. */
-  flex: 1 1 auto;
+  /* Right cluster — exact spec requested by host. min-width:0 +
+   * min-height:0 + overflow:auto are kept so the bordered group-table
+   * still scrolls vertically inside when [maxHeight] caps the host. */
+  width: 81%;
+  display: flex;
+  align-items: flex-start;
+  gap: 32px;
+  flex: 1 0 0;
   min-width: 0;
   min-height: 0;
   overflow: auto;

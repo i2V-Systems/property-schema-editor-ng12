@@ -61,13 +61,7 @@
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  /* calc(100% - 40px), NOT 100%: the host is forced to width:100% inline
-   * by CommonModal (can't override that from :host). Subtracting the
-   * 40px content gutter HERE makes .pse-table-wrap the limiting box, so
-   * a wide table overflows it and scrolls H+V inside — instead of
-   * stretching the modal. No inline style touches .grid-container, so
-   * this value sticks. */
-  width: calc(100% - 40px);
+  width: 100%;
   /* flex:1 1 AUTO (basis:auto, NOT 0) — a 0 basis collapses this box to
    * zero height whenever :host has no *definite* height (a [maxHeight]
    * cap alone is not definite), which blanks the whole editor. With
