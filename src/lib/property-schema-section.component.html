@@ -1,3 +1,11 @@
+<!--
+  Flex-row layout: title + pencil pinned to the left, a bordered
+  grouped-by-type table on the right (rows: type label | chip list of
+  property names). Wraps to multiple chip lines per row when long;
+  scrolls vertically inside the bordered table when `[maxHeight]` caps
+  the host. The outer .pse-section is just the row container — the
+  visible border/rounding lives on the inner .pse-group-table.
+-->
 <div class="pse-section">
   <div class="pse-section__head">
     <div class="pse-section__title">
@@ -22,11 +30,13 @@
 
   <div class="pse-section__body">
     <ng-container *ngIf="count > 0; else noProps">
-      <div class="pse-prop-row" *ngFor="let g of groups">
-        <div class="pse-prop-key">{{ label(g.type) }}</div>
-        <div class="pse-prop-vals">
-          <span class="flex-row-space-between-center i2v-chips large secondary-default"
-            *ngFor="let n of g.names">{{ label(n) }}</span>
+      <div class="pse-group-table">
+        <div class="pse-group-row" *ngFor="let g of groups">
+          <div class="pse-group-key">{{ label(g.type) }}</div>
+          <div class="pse-group-vals">
+            <span class="flex-row-space-between-center i2v-chips large secondary-default"
+              *ngFor="let n of g.names">{{ label(n) }}</span>
+          </div>
         </div>
       </div>
     </ng-container>
